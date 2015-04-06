@@ -2,10 +2,12 @@
 
 # Scalaxy/Reified
 
-Simple reified values / functions framework that leverages Scala 2.10 macros ([Scaladoc](http://ochafik.github.io/Scalaxy/Reified/latest/api/index.html)).
+Simple reified values / functions framework that leverages Scala macros ([OLD Scaladoc](http://ochafik.github.io/Scalaxy/Reified/latest/api/index.html)).
 
-Package `scalaxy.reified` provides a `reify` method that goes beyond the stock `Universe.reify` method, by taking care of captured values and allowing composition of reified functions for improved flexibility of dynamic usage of ASTs.
+Package `scalaxy.reified` provides a `reify` method that goes beyond the stock `Universe.reify` method, by allowing composition / inlining of reified functions for improved flexibility of dynamic usage of ASTs.
 The original expression is also available at runtime, without having to compile it with `ToolBox.eval`.
+
+See slides from scala.io 2013 talk: [Practical reified trees (not only) for GPGPU](https://docs.google.com/presentation/d/1R61HTC6HMzmv7y6UqCSmVhy7kNk04l9cDg2vYHECZ98/edit#slide=id.p).
 
 This is still highly experimental, documentation will come soon enough.
 
@@ -14,8 +16,8 @@ import scalaxy.reified._
 
 def comp(capture1: Int): ReifiedFunction1[Int, Int] = {
   val capture2 = Seq(10, 20, 30)
-  val f = reify((x: Int) => capture1 + capture2(x))
-  val g = reify((x: Int) => x * x)
+  val f = reified((x: Int) => capture1 + capture2(x))
+  val g = reified((x: Int) => x * x)
 
   g.compose(f)
 }
@@ -25,11 +27,10 @@ val f = comp(10)
 println(f(1))
 
 // Get the function's AST, inlining all captured values and captured reified values:
-val ast = f.expr().tree
-println(ast)
+println(f.expr.tree)
 
 // Compile the AST at runtime (needs scala-compiler.jar in the classpath):
-val compiledF = ast.compile()()
+val compiledF = f.compile()()
 // Evaluation, using the freshly-compiled function:
 println(compiledF(1))
 ```
@@ -41,7 +42,7 @@ If you're using `sbt` 0.13.0+, just put the following lines in `build.sbt`:
 scalaVersion := "2.11.6"
 
 // Dependency at compilation-time only (not at runtime).
-libraryDependencies += "com.nativelibs4java" %% "scalaxy-reified" % "0.3-SNAPSHOT"
+libraryDependencies += "com.nativelibs4java" %% "scalaxy-reified" % "0.4-SNAPSHOT"
 
 // Avoid sbt-related macro classpath issues.
 fork := true
@@ -55,17 +56,17 @@ resolvers += Resolver.sonatypeRepo("snapshots")
 To make it easy to deal with dynamic computations that could benefit from re-compilation at runtime for optimization purposes, or from conversion to other forms of executables (e.g. conversion to SQL, to OpenCL with ScalaCL, etc...).
 
 For instance, let's say you have a complex financial derivatives valuation framework. It depends on lots of data (eventually stored in arrays and maps, e.g. dividend dates and values), which are fetched dynamically by your program, and it is composed of many pieces that can be assembled in many different ways (you might have several valuation algorithms, several yield curve types, and so on).
-If each of these pieces returns a reified value (an instanceof `Reified[_]` returned by the `scalaxy.reified.reify` method, e.g. a `Reified[(Date, Map[Product, Double]) => Double]`), then thanks to reified values being composable your top level will be able to return a reified value as well, which will be a function of, say, the evaluation date, and maybe a map of market data bumps.
+If each of these pieces returns a reified value (an instanceof `Reified[_]` returned by the `scalaxy.reified.reified` method, e.g. a `Reified[(Date, Map[Product, Double]) => Double]`), then thanks to reified values being composable your top level algorithm will be able to return a reified value as well, which will be a function of, say, the evaluation date, and maybe a map of market data bumps.
 You can evaluate that function straight away, since every reified value holds the original value: evaluation will then be classically dynamic, with functions calling functions and all.
-Or... if you need better performance from that function (which your program might call thousands of times), you can fetch that function's AST, compile it _at runtime_ with a `scala.tool.ToolBox` and get a fresh function with the same signature, but with all the static analysis optimizations the compiler was able to shove in.
+Or... if you need better performance from that function (which your program might call millions of times), you can fetch that function's AST, compile it _at runtime_ with a `scala.tool.ToolBox` and get a fresh function with the same signature, but with all the static analysis optimizations and inlining the compiler was able to shove in (opening the door to further optimizations by the JVM).
 
-More detailed examples will hopefully come soon...
+More detailed examples will come, but please make sure to have a look at the tests and at the slides from this scala.io 2013 talk: [Practical reified trees (not only) for GPGPU](https://docs.google.com/presentation/d/1R61HTC6HMzmv7y6UqCSmVhy7kNk04l9cDg2vYHECZ98/edit#slide=id.p)...
 
 # How can it be faster?
 
 ## Caveat: compilation overhead
 
-First off, re-compiling and evaluating reified functions is only faster if you indent to evaluate them enough times to overcome the overhead of firing the compiler (expect around 70 ms to compile one of the example ASTs below on a MacBook Pro 2012 with Scala 2.10.2).
+First off, re-compiling and evaluating reified functions is only faster if you intend to evaluate them enough times to overcome the overhead of firing the compiler (expect around 70 ms to compile one of the example ASTs below on a MacBook Pro 2012 with Scala 2.10.2).
 
 ## A dummy integrator example
 
@@ -73,7 +74,7 @@ That said, let's take the following example:
 ```scala
 import scalaxy.reified._
 def createDiscreteIntegrator(f: Reified[Double => Double]): Reified[(Int, Int) => Double] = {
-  reify((start: Int, end: Int) => {
+  reified((start: Int, end: Int) => {
     var tot = 0.0
     for (i <- start until end) {
       tot += f(i)
@@ -83,7 +84,7 @@ def createDiscreteIntegrator(f: Reified[Double => Double]): Reified[(Int, Int) =
 }
 import scala.math._
 val factor = 1 / Pi
-val fIntegrator = createDiscreteIntegrator(reify(v => {
+val fIntegrator = createDiscreteIntegrator(reified(v => {
   cos(v * factor) * exp(v)
 }))
 
@@ -96,7 +97,7 @@ for ((start, end) <- Seq((0, 1), (0, 10))) {
 }
 
 ```
-(see [full code here](https://github.com/ochafik/Scalaxy/blob/master/Reified/src/test/scala/scalaxy/reified/READMEExamplesTest.scala))
+(see [full code here](./src/test/scala/scalaxy/reified/READMEExamplesTest.scala))
 
 ## Let's ignore reification
 
@@ -190,7 +191,7 @@ First, you can see in that previous AST that the function value `capture$1` is a
 ```
 The advantage of this form is that Scalaxy/Reified create a [ToolBox](http://www.scala-lang.org/archives/downloads/distrib/files/nightly/docs-2.10.2/compiler/index.html#scala.tools.reflect.ToolBox) with optimization flags like `-optimise -inline`, which might be able to inline the `capture$1` call away, which wasn't possible with the `val` version.
 
-This alone can produce 10x speed improvements if your functions have a small payload and if you compose them a lot! (see [PerfTest](https://github.com/ochafik/Scalaxy/blob/master/Reified/src/test/scala/scalaxy/reified/PerfTest.scala))
+This alone can produce 10x speed improvements if your functions have a small payload and if you compose them a lot! (see [PerfTest](./src/test/scala/scalaxy/reified/PerfTest.scala))
 
 ### Rewriting loops
 
@@ -230,8 +231,8 @@ The following integrator code:
 import scalaxy.reified._
 def comp(offset: Int) = {
   val values = Array(10, 20, 30)
-  val getter = reify((index: Int) => offset + values(index))
-  val square = reify((x: Int) => x * x)
+  val getter = reified((index: Int) => offset + values(index))
+  val square = reified((x: Int) => x * x)
   square.compose(getter)
 }
 val f: ReifiedFunction1[Int, Int] = comp(10)
