@@ -2,9 +2,9 @@
 
 # Scalaxy/Reified
 
-Simple reified values / functions framework that leverages Scala macros ([OLD Scaladoc](http://ochafik.github.io/Scalaxy/Reified/latest/api/index.html)).
+Simple reified values / functions framework that leverages Scala macros (previously incubated at [Scalaxy](http://github.com/nativelibs4java/Scalaxy)).
 
-Package `scalaxy.reified` provides a `reify` method that goes beyond the stock `Universe.reify` method, by allowing composition / inlining of reified functions for improved flexibility of dynamic usage of ASTs.
+Package `scalaxy.reified` provides a `reified` method that goes beyond the stock `Universe.reify` method, by allowing composition / inlining of reified functions for improved flexibility of dynamic usage of ASTs.
 The original expression is also available at runtime, without having to compile it with `ToolBox.eval`.
 
 See slides from scala.io 2013 talk: [Practical reified trees (not only) for GPGPU](https://docs.google.com/presentation/d/1R61HTC6HMzmv7y6UqCSmVhy7kNk04l9cDg2vYHECZ98/edit#slide=id.p).
@@ -101,13 +101,13 @@ for ((start, end) <- Seq((0, 1), (0, 10))) {
 
 ## Let's ignore reification
 
-If you ignore the `reify` calls, this is a straightforward higher-kinded function that creates a function integrator specialized for a particular input function `f`.
+If you ignore the `reified` calls, this is a straightforward higher-kinded function that creates a function integrator specialized for a particular input function `f`.
 
 In the integrator's loop, each call to `f.apply` incurs some indirection, which the JVM might not optimize away.
 
 ## I can haz AST?
 
-So what does `reify` do that is so special?
+So what does `reified` do that is so special?
 It creates a [`Reified[A]`](http://ochafik.github.io/Scalaxy/Reified/latest/api/index.html#scalaxy.reified.Reified), which preserves the original value, its AST and its captured values.
 
 For instance, here's the AST of `fIntegrator`:
