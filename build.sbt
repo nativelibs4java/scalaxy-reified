@@ -70,7 +70,8 @@ lazy val reifiedDoc = (project in file("Doc")).
   settings(
     publish := { },
     (skip in compile) := true,
-    git.remoteRepo := "git@github.com:nativelibs4java/scalaxy-reified.git",
+    // Setup with: travis encrypt 'GIT_NAME="Olivier Chafik" GIT_EMAIL=... GH_TOKEN=...' --add
+    git.remoteRepo := "https://" System.getenv("GH_TOKEN") + "@nativelibs4java/scalaxy-reified.git",
     scalacOptions in (Compile, doc) <++= (name, baseDirectory, description, version, sourceDirectory) map {
       case (name, base, description, version, sourceDirectory) =>
         Opts.doc.title(name + ": " + description) ++

@@ -9,9 +9,13 @@ cache:
   - $HOME/.ivy2
   - $HOME/.sbt
 after_success:
+- git config user.name "${GIT_NAME}"
+- git config user.email "${GIT_EMAIL}"
 - '[[ $TRAVIS_BRANCH == "master" ]] && { sbt ++$TRAVIS_SCALA_VERSION publish; };'
-- '[[ $TRAVIS_BRANCH == "master" ]] && { sbt "project reifiedDoc" ghpages-push-site; };'
+- '[[ $TRAVIS_BRANCH == "master" ]] && { sbt "project reifiedDoc" ghpages-push-site;
+  };'
 env:
   global:
   - secure: IM29vaw4isGNcpH5UMRz/T8a+d94lofLj+RyvUVElN2JQil92fIlpykPaBRIc/UDz3jac6UO7UFa7DDWyhqzJbEiKGEyl18A6dP3PnL4PsmpObtTvVp4kjqn+eV+csm7ICk9ygUdqhpNkZlz9daPKSTrpCFt8fFQMRvH26HZYPk=
   - secure: HNumrY+W/zCV1N6/oiNofrXMFBLlUexOKrX6C4oKwBSQia9bzvw0wB+CFrrmHWoR9QAf58RHADM+U4mOZ24bPihdiBoqH55dgJ6uUm4nlC6FkhAUgfBjK5uCArvX2sKVEJFDQnRzkoS0Mq1y5Z9Qc4fbAZnE9D80lDbErJKoF8c=
+  - secure: Y+SfvYObOepp+02+r52nlRGWPMTlmDhBiD/haSBThusiCqGw06+e1n+vVQS8+DWCEYEXR2m4XdBdi6rKQxJBfRR8o2S7+mDwp6JHZJdc4g9e8Px5GTC8fHzG40/TzsUsGvnB3rf2eWvXkD1HSXIcvQYXzdMN/eaP+JHnY3MaUEc=
