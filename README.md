@@ -260,6 +260,10 @@ In short, with Scalaxy/Reified you combine the flexibility of dynamic compositio
 # TODO
 
 - Add many more tests
+- Have Travis CI to automatically upload the doc:
+  ```
+  sbt 'project reifiedDoc' ghpages-push-site
+  ```
 - Add conversion for `immutable.{ TreeSet, TreeMap, SortedSet, SortedMap }` captured values
 - Implement a simple Romberg integrator
 - Fix case where same term symbol might point to different values.
@@ -272,12 +276,12 @@ In short, with Scalaxy/Reified you combine the flexibility of dynamic compositio
 # Hacking
 
 If you want to build / test / hack on this project:
-- Make sure to use [paulp's sbt script](https://github.com/paulp/sbt-extras) with `sbt` 0.12.2+
+- Make sure to use [paulp's sbt script](https://github.com/paulp/sbt-extras) with `sbt` 0.13.7+
 - Use the following commands to checkout the sources and build the tests continuously:
 
     ```
-    git clone git://github.com/ochafik/Scalaxy.git
-    cd Scalaxy
-    sbt "project scalaxy-reified" "; clean ; ~test"
+    git clone git://github.com/nativelibs4java/scalaxy-reified.git
+    cd scalaxy-reified
+    sbt "; clean ; ~test"
     ```
 

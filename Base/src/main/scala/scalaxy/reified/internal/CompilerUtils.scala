@@ -3,7 +3,7 @@ package scalaxy.reified.internal
 import scala.tools.reflect.ToolBox
 import scala.reflect.runtime.universe
 
-object CompilerUtils {
+private[reified] object CompilerUtils {
   import universe._
   import definitions._
 

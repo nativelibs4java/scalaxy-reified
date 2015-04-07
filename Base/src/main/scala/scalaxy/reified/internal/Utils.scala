@@ -7,7 +7,7 @@ import scala.tools.reflect.ToolBox
 
 import scalaxy.reified.Reified
 
-object Utils {
+private[reified] object Utils {
 
   def getMethodMirror(instance: Any, name: String) = {
     val classLoader = Option(instance.getClass.getClassLoader)

@@ -49,7 +49,7 @@ lazy val commonSettings = Seq(
   )
 )
 
-lazy val base = (project in file("Base")).
+lazy val reifiedBase = (project in file("Base")).
   settings(commonSettings ++ Seq(
     name := "scalaxy-reified-base",
     libraryDependencies <+= (organization, version) {
@@ -59,8 +59,29 @@ lazy val base = (project in file("Base")).
   ): _*)
 
 lazy val reified = (project in file(".")).
-  settings(commonSettings ++ Seq(
-    name := "scalaxy-reified"
-  ): _*).
-  dependsOn(base).
-  aggregate(base)
+  settings(name := "scalaxy-reified").
+  settings(commonSettings: _*).
+  dependsOn(reifiedBase).
+  aggregate(reifiedBase)
+
+lazy val reifiedDoc = (project in file("Doc")).
+  settings(commonSettings: _*).
+  settings(site.settings ++ site.includeScaladoc() ++ ghpages.settings: _*).
+  settings(
+    publish := { },
+    (skip in compile) := true,
+    git.remoteRepo := "git@github.com:nativelibs4java/scalaxy-reified.git",
+    scalacOptions in (Compile, doc) <++= (name, baseDirectory, description, version, sourceDirectory) map {
+      case (name, base, description, version, sourceDirectory) =>
+        Opts.doc.title(name + ": " + description) ++
+        Opts.doc.version(version) ++
+        //Seq("-doc-source-url", "https://github.com/nativelibs4java/scalaxy-reified/blob/master/Base/src/main/scala") ++
+        Seq("-doc-root-content", (sourceDirectory / "main" / "rootdoc.txt").getAbsolutePath)
+    },
+    unmanagedSourceDirectories in Compile <<= (
+      (Seq(reified, reifiedBase) map (unmanagedSourceDirectories in _ in Compile)).join.apply {
+        (s) => s.flatten.toSeq
+      }
+    )
+  ).
+  dependsOn(reified, reifiedBase)

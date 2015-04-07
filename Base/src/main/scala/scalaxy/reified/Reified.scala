@@ -31,13 +31,13 @@ private[reified] trait HasReified[A] {
 }
 
 /**
- * Reified value which can be created by {@link scalaxy.reified.reify}.
- * This object retains the runtime value passed to {@link scalaxy.reified.reify} as well as its
+ * Reified value which can be created by {@link scalaxy.reified.reified}.
+ * This object retains the runtime value passed to {@link scalaxy.reified.reified} as well as its
  * compile-time AST.
  */
 final class Reified[A: TypeTag](
   /**
-   * Original value passed to {@link scalaxy.reified.reify}
+   * Original value passed to {@link scalaxy.reified.reified}
    */
   valueGetter: => A,
   /**
