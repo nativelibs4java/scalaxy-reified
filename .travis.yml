@@ -10,6 +10,7 @@ cache:
   - $HOME/.sbt
 after_success:
 - '[[ $TRAVIS_BRANCH == "master" ]] && { sbt ++$TRAVIS_SCALA_VERSION publish; };'
+- '[[ $TRAVIS_BRANCH == "master" ]] && { sbt "project reifiedDoc" ghpages-push-site; };'
 env:
   global:
   - secure: IM29vaw4isGNcpH5UMRz/T8a+d94lofLj+RyvUVElN2JQil92fIlpykPaBRIc/UDz3jac6UO7UFa7DDWyhqzJbEiKGEyl18A6dP3PnL4PsmpObtTvVp4kjqn+eV+csm7ICk9ygUdqhpNkZlz9daPKSTrpCFt8fFQMRvH26HZYPk=
