@@ -12,7 +12,6 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 import scalaxy.reified.internal.Optimizer.loopsTransformer
-import scalaxy.generic.trees._
 
 private[reified] class CapturesFlattener(tree: Tree) extends Transformer {
   private val captureDefMods = Modifiers(Flag.PRIVATE | Flag.FINAL | Flag.LOCAL)

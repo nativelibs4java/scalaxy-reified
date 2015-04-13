@@ -19,7 +19,7 @@ import scala.reflect.NameTransformer.encode
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-import scalaxy.generic.trees.simplifyGenericTree
+import scalaxy.generic.AllTreeSimplifiers
 
 /**
  * Reified value wrapper.
@@ -64,28 +64,40 @@ final class Reified[A: TypeTag](
    */
   def compile(toolbox: ToolBox[universe.type] = optimisingToolbox): () => A = {
 
-    var ast: Tree = flatExpr.tree
+    object Compile extends AllTreeSimplifiers {
+      override val global = toolbox.u
+      import global._
+
+      var ast: Tree = flatExpr.tree
+
+      ast = simplifyGenericTree(toolbox.typecheck(ast, pt = valueTag.tpe))
+      // println("SIMPLIFIED AST: " + ast)
+
+      // TODO(ochafik): Drop this!!!
+      ast = toolbox.untypecheck(ast)
+      // println("RESET AST: " + ast)
+
+      // TODO(ochafik): Do the symbol reattribution/surgery needed to drop the untypecheck.
+      def reinline(tree: Tree) = tree match {
+        case DefDef(mods, name, tparams, vparamss, tpt, rhs) =>
+          DefDef(
+            mods.mapAnnotations(list => newInlineAnnotation :: list),
+            name, tparams, vparamss, tpt, rhs)
+        case _ =>
+          tree
+      }
+      ast = ast match {
+        case Block(stats, expr) =>
+          Block(stats.map(reinline _), expr)
+        case _ =>
+          ast
+      }
+      // println("REINLINED AST: " + ast)
+      val result = toolbox.compile(ast)
+    }
     // println("AST: " + ast)
-    ast = simplifyGenericTree(toolbox.typecheck(ast, pt = valueTag.tpe))
-    // println("SIMPLIFIED AST: " + ast)
-    ast = toolbox.untypecheck(ast)
-    // println("RESET AST: " + ast)
-    def reinline(tree: Tree) = tree match {
-      case DefDef(mods, name, tparams, vparamss, tpt, rhs) =>
-        DefDef(
-          mods.mapAnnotations(list => newInlineAnnotation :: list),
-          name, tparams, vparamss, tpt, rhs)
-      case _ =>
-        tree
-    }
-    ast = ast match {
-      case Block(stats, expr) =>
-        Block(stats.map(reinline _), expr)
-      case _ =>
-        ast
-    }
-    // println("REINLINED AST: " + ast)
-    val result = toolbox.compile(ast)
+    
+    val result = Compile.result
 
     () => result().asInstanceOf[A]
   }
