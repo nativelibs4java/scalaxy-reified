@@ -68,6 +68,8 @@ final class Reified[A: TypeTag](
       override val global = toolbox.u
       import global._
 
+      override def typecheck(tree: Tree) = toolbox.typecheck(tree)
+
       var ast: Tree = flatExpr.tree
 
       ast = simplifyGenericTree(toolbox.typecheck(ast, pt = valueTag.tpe))
