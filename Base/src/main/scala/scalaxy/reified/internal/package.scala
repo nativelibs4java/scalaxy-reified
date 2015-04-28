@@ -17,7 +17,12 @@ package object internal {
 
   private[reified] val syntheticVariableNamePrefix = "scalaxy$reified$"
 
-  private def runtimeExpr[A: c.WeakTypeTag](c: Context)(tree: c.universe.Tree): c.Expr[universe.Expr[A]] = {
+  private[this]
+  def runtimeExpr
+      [A: c.WeakTypeTag]
+      (c: Context)
+      (tree: c.universe.Tree)
+      : c.Expr[universe.Expr[A]] = {
     import c.universe._
 
     c.Expr[universe.Expr[A]](
@@ -29,45 +34,70 @@ package object internal {
     )
   }
 
-  private[reified] def reifiedMacro[A: universe.TypeTag](v: A): Reified[A] = macro reifiedImpl[A]
-  private[reified] def reifiedWithDifferentRuntimeValue[A: universe.TypeTag](v: A, runtimeValue: A): Reified[A] = macro reifyWithDifferentRuntimeValueImpl[A]
+  private[reified]
+  def reifiedMacro[A: universe.TypeTag]
+                  (v: A)
+                  : Reified[A] =
+    macro reifiedImpl[A]
 
-  def reifiedImpl[A: c.WeakTypeTag](c: Context)(v: c.Expr[A])(tt: c.Expr[universe.TypeTag[A]]): c.Expr[Reified[A]] = {
+  private[reified]
+  def reifiedWithDifferentRuntimeValue[A: universe.TypeTag]
+                                      (v: A, runtimeValue: A)
+                                      : Reified[A] =
+    macro reifyWithDifferentRuntimeValueImpl[A]
+
+  def reifiedImpl
+      [A: c.WeakTypeTag]
+      (c: Context)
+      (v: c.Expr[A])
+      (tt: c.Expr[universe.TypeTag[A]])
+      : c.Expr[Reified[A]] = {
     import c.universe._
 
     val expr = runtimeExpr[A](c)(c.typecheck(v.tree, pt = weakTypeTag[A].tpe))
     // println("COMPILING EXPR[" + weakTypeTag[A].tpe + "] = " + v.tree)
-    val res = reify({
-      implicit val valueTag: universe.TypeTag[A] = tt.splice
-      new Reified[A](
-        v.splice,
-        expr.splice)
-    })
-    res
+
+    c.Expr[Reified[A]](q"""
+      implicit val ${TermName(c.freshName("tt"))} = $tt
+      new scalaxy.reified.Reified[${weakTypeOf[A]}]($v, $expr)
+    """)
   }
 
-  def hasReifiedValueToReifiedValueImpl[A: c.WeakTypeTag](c: Context)(r: c.Expr[HasReified[A]])(tt: c.Expr[universe.TypeTag[A]]): c.Expr[Reified[A]] = {
+  def hasReifiedValueToReifiedValueImpl
+      [A: c.WeakTypeTag]
+      (c: Context)
+      (r: c.Expr[HasReified[A]])
+      (tt: c.Expr[universe.TypeTag[A]]) = {
     import c.universe._
 
-    reify(r.splice.reifiedValue)
+    c.Expr[Reified[A]](q"$r.reifiedValue")
   }
 
-  def hasReifiedValueToValueImpl[A: c.WeakTypeTag](c: Context)(r: c.Expr[HasReified[A]])(tt: c.Expr[universe.TypeTag[A]]): c.Expr[A] = {
+  def hasReifiedValueToValueImpl
+      [A: c.WeakTypeTag]
+      (c: Context)
+      (r: c.Expr[HasReified[A]])
+      (tt: c.Expr[universe.TypeTag[A]])
+      : c.Expr[A] = {
     import c.universe._
 
-    reify(r.splice.reifiedValue.value)
+    c.Expr[A](q"$r.reifiedValue.value")
   }
 
-  def reifyWithDifferentRuntimeValueImpl[A: c.WeakTypeTag](c: Context)(v: c.Expr[A], runtimeValue: c.Expr[A])(tt: c.Expr[universe.TypeTag[A]]): c.Expr[Reified[A]] = {
+  def reifyWithDifferentRuntimeValueImpl
+      [A: c.WeakTypeTag]
+      (c: Context)
+      (v: c.Expr[A], runtimeValue: c.Expr[A])
+      (tt: c.Expr[universe.TypeTag[A]]) = {
 
     import c.universe._
 
     val expr = runtimeExpr[A](c)(c.typecheck(v.tree))
-    reify({
-      implicit val valueTag = tt.splice
-      new Reified[A](
-        runtimeValue.splice,
-        Utils.typeCheck(expr.splice, valueTag.tpe))
-    })
+    c.Expr[Reified[A]](q"""
+      implicit val ${TermName(c.freshName("tt"))} = $tt
+      new scalaxy.reified.Reified[${weakTypeOf[A]}](
+        $runtimeValue,
+        scalaxy.reified.internal.Utils.typeCheck($expr, valueTag.tpe))
+    """)
   }
 }
