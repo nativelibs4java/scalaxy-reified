@@ -22,8 +22,8 @@ trait TestUtils {
       import compat._
       new Traverser {
         override def traverse(tree: Tree) {
-          if (tree.symbol != null && tree.symbol.isFreeTerm) {
-            val value = tree.symbol.asFreeTerm.value
+          if (tree.symbol != null && internal.isFreeTerm(tree.symbol)) {
+            val value = internal.asFreeTerm(tree.symbol).value
             b += value.asInstanceOf[AnyRef]
             value match {
               case hr: HasReified[_] =>

@@ -69,7 +69,6 @@ class CaptureConversionsTest extends TestUtils {
     //testValue(TreeSet(1, 2), predicate = _.isInstanceOf[TreeSet[_]])
     //testValue(SortedSet(1, 2), predicate = _.isInstanceOf[SortedSet[_]])
     testValue(HashSet(1, 2), predicate = _.isInstanceOf[HashSet[_]])
-    testValue(Stack(1, 2), predicate = _.isInstanceOf[Stack[_]])
     testValue(Queue(1, 2), predicate = _.isInstanceOf[Queue[_]])
     testValue(Vector(1, 2), predicate = _.isInstanceOf[Vector[_]])
     testValue(1 to 10, predicate = _.isInstanceOf[Range])
